@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PalSmart Shopping</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#edf0f4;color:#202833}
+header{background:#131921;color:white;padding:14px 4%;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.logo{font-size:28px;font-weight:bold;color:#ffbd35;cursor:pointer}
+.search{display:flex;flex:1;min-width:200px}
+input,textarea{font:inherit;padding:12px;border:1px solid #bbb;border-radius:5px}
+.search input{flex:1;min-width:0;border-radius:5px 0 0 5px}
+button{padding:11px 15px;border:0;border-radius:6px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.search button,.primary{background:#ffd814}
+.nav{display:flex;gap:8px;flex-wrap:wrap;background:#232f3e;padding:10px 4%}
+.nav button{background:transparent;color:white}
+main{max-width:1300px;margin:auto;padding:20px 4%;min-height:60vh}
+.page{display:none}
+.page.active{display:block}
+.hero{background:linear-gradient(110deg,#162a48,#267a88);padding:35px;border-radius:12px;color:white;margin-bottom:25px}
+.hero h1{font-size:clamp(30px,5vw,48px)}
+.hero button{background:#ffd814}
+.products{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.card{background:white;border-radius:10px;padding:14px;box-shadow:0 2px 10px #0001}
+.card img{width:100%;height:180px;object-fit:contain;cursor:pointer}
+.card h3{cursor:pointer}
+.price{font-size:22px;font-weight:bold;color:#b12704}
+.rating{color:#d88b00;font-size:14px}
+.card button{width:100%;margin-top:7px}
+.secondary{background:#e3e7ec}
+.danger{background:#f7d3d6}
+.details-layout{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:20px}
+.main-photo{background:white;padding:15px;border-radius:10px}
+.main-photo img{width:100%;height:350px;object-fit:contain}
+.thumbnails{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumbnails img{width:60px;height:60px;object-fit:contain;background:white;border:1px solid #bbb;border-radius:5px;cursor:pointer;padding:3px}
+.cart-row{display:flex;gap:15px;align-items:center;flex-wrap:wrap;background:white;padding:14px;margin:10px 0;border-radius:8px}
+.cart-row img{width:80px;height:80px;object-fit:contain}
+.cart-row .info{flex:1;min-width:120px}
+.qty{display:flex;align-items:center;gap:10px}
+#cartSummary,.summary{background:white;padding:18px;border-radius:8px;margin:15px 0}
+form{max-width:550px;background:white;padding:20px;border-radius:10px}
+form>input,form>textarea{display:block;width:100%;margin:12px 0}
+.payment-option{display:block;background:#f6f7f9;border:1px solid #d5dae0;padding:14px;margin:10px 0;border-radius:8px;cursor:pointer}
+.payment-option input{margin-right:8px}
+.notice{background:#e1f5e6;padding:18px;border-radius:8px}
+footer{text-align:center;background:#232f3e;color:white;padding:25px;margin-top:30px}
+@media(max-width:900px){.products{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){
+ .products{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .card{padding:9px}.card img{height:135px}
+ .details-layout{grid-template-columns:1fr}
+ header{padding:12px}.search{flex-basis:100%;order:3}
+ main{padding:14px 10px}.hero{padding:22px}
+}
+@media(max-width:380px){.products{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logo">PalSmart</div>
+  <div class="search">
+    <input id="searchInput" placeholder="Products खोजें..." type="search">
+    <button id="searchBtn">Search</button>
+  </div>
+  <button id="headerCart">🛒 Cart (<span id="cartCount">0</span>)</button>
+</header>
+
+<nav class="nav">
+  <button data-page="home">🏠 Home</button>
+  <button data-page="cart">🛒 My Cart</button>
+  <button data-page="login">Login</button>
+  <button data-page="signup">Sign Up</button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+  <div class="hero">
+    <p>WELCOME TO PALSMART</p>
+    <h1>Smart Shopping.<br>Better Living.</h1>
+    <p>Electronics, fashion और daily essentials एक ही जगह।</p>
+    <button id="heroShop">Shop Now →</button>
+  </div>
+  <h2 id="productsHeading">Popular Products</h2>
+  <div id="productList" class="products"></div>
+  <p id="noProducts" hidden>कोई product नहीं मिला।</p>
+</section>
+
+<section id="details" class="page">
+  <button class="secondary" id="backHome">← Back to Products</button>
+  <div class="details-layout">
+    <div>
+      <div class="main-photo"><img id="detailImage" alt="Product"></div>
+      <div id="thumbnails" class="thumbnails"></div>
+    </div>
+    <div>
+      <h1 id="detailName"></h1>
+      <p id="detailRating" class="rating">★★★★★ Popular product</p>
+      <p id="detailPrice" class="price"></p>
+      <p id="detailCategory"></p>
+      <p id="detailDescription"></p>
+      <button id="detailAdd" class="primary">Add to Cart</button>
+      <button id="detailBuy" class="secondary">Buy Now</button>
+    </div>
+  </div>
+</section>
+
+<section id="cart" class="page">
+  <h1>My Shopping Cart</h1>
+  <div id="cartItems"></div>
+  <div id="cartSummary"></div>
+  <button id="continueShopping" class="secondary">Continue Shopping</button>
+  <button id="checkoutBtn" class="primary">Proceed to Checkout</button>
+</section>
+
+<section id="checkout" class="page">
+  <h1>Checkout</h1>
+  <div id="checkoutSummary" class="summary"></div>
+  <form id="checkoutForm">
+    <h2>Delivery Details</h2>
+    <input id="customerName" placeholder="पूरा नाम" required>
+    <input id="customerPhone" type="tel" placeholder="10 अंकों का Mobile Number" pattern="[0-9]{10}" maxlength="10" required>
+    <textarea id="customerAddress" placeholder="पूरा Delivery Address" required></textarea>
+
+    <h2>Payment Method</h2>
+    <label class="payment-option">
+      <input type="radio" name="paymentMethod" value="cod" checked>
+      <strong>Cash on Delivery (COD)</strong>
+      <br>सामान मिलने पर भुगतान करें।
+    </label>
+
+    <label class="payment-option">
+      <input type="radio" name="paymentMethod" value="online">
+      <strong>Online Payment (Demo)</strong>
+      <br>केवल demonstration, असली payment नहीं होगी।
+    </label>
+
+    <p id="paymentMessage">आप सामान मिलने पर पैसे देंगे।</p>
+    <button id="placeOrderBtn" class="primary" type="submit">Place Demo Order</button>
+  </form>
+  <p>यह demo website है। कोई असली payment या seller को order नहीं भेजा जाता।</p>
+</section>
+
+<section id="success" class="page">
+  <div class="notice">
+    <h1>✓ Demo Order Successful!</h1>
+    <p id="orderMessage"></p>
+  </div>
+  <button id="successHome" class="primary">Back to Home</button>
+</section>
+
+<section id="login" class="page">
+  <h1>Login (Demo)</h1>
+  <form id="loginForm">
+    <input type="email" id="loginEmail" placeholder="Email" required>
+    <input type="password" id="loginPassword" placeholder="Password" required>
+    <button class="primary" type="submit">Login</button>
+  </form>
+  <p id="loginMessage"></p>
+  <p>Demo login है; वास्तविक account verification नहीं है।</p>
+</section>
+
+<section id="signup" class="page">
+  <h1>Sign Up (Demo)</h1>
+  <form id="signupForm">
+    <input id="signupName" placeholder="नाम" required>
+    <input id="signupEmail" type="email" placeholder="Email" required>
+    <input id="signupPassword" type="password" minlength="6" placeholder="Password (कम से कम 6 अक्षर)" required>
+    <button class="primary" type="submit">Create Demo Account</button>
+  </form>
+  <p id="signupMessage"></p>
+</section>
+</main>
+
+<footer>
+  <strong>PalSmart</strong>
+  <p>Smart Shopping. Better Living.</p>
+  <p>Demo store — online payments and deliveries are not enabled.</p>
+</footer>
+
+<script>
+"use strict";
+
+const products = [
+{id:1,name:"Wireless Headphones",price:1299,category:"Electronics",
+description:"Music और calls के लिए wireless headphones। खरीदने से पहले seller की specifications जाँचें।",
+images:[
+"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1505740106531-4243f3831c78?auto=format&fit=crop&w=700&q=80"]},
+{id:2,name:"Smart Watch",price:1999,category:"Electronics",
+description:"Modern style smartwatch। Compatibility और features की पुष्टि करें।",
+images:[
+"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1544117519-31a4b719223d?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&w=700&q=80"]},
+{id:3,name:"Sports Shoes",price:1599,category:"Fashion",
+description:"Walking और daily wear के लिए shoes। सही size की पुष्टि करें।",
+images:[
+"https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1495555961986-6d4c1ecb7be3?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=80"]},
+{id:4,name:"Travel Backpack",price:899,category:"Bags",
+description:"Daily use और travel के लिए backpack।",
+images:[
+"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1622560480654-d96214fdc887?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?auto=format&fit=crop&w=700&q=80"]},
+{id:5,name:"Camera",price:4999,category:"Electronics",
+description:"Photography के लिए camera listing। Technical details verify करें।",
+images:[
+"https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1510127034890-597e8d1b4f3e?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1519183071298-a2962be90b8e?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=700&q=80"]},
+{id:6,name:"Sunglasses",price:599,category:"Fashion",
+description:"Daily wear sunglasses। UV protection seller से verify करें।",
+images:[
+"https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1508296695146-257a814070b4?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=700&q=80",
+"https://images.unsplash.com/photo-1508296695146-257a814070b4?auto=format&fit=crop&w=700&q=80"]}
+];
+
+const $ = id => document.getElementById(id);
+let cart = [];
+let currentProductId = null;
+let searchTerm = "";
+
+try {
+  const stored = JSON.parse(localStorage.getItem("palsmart_cart") || "[]");
+  if (Array.isArray(stored)) {
+    cart = stored.filter(x => products.some(p => p.id === x.id))
+      .map(x => {
+        const p = products.find(p => p.id === x.id);
+        return {id:p.id,name:p.name,price:p.price,image:p.images[0],
+          qty:Number.isInteger(x.qty) && x.qty > 0 ? x.qty : 1};
+      });
+  }
+} catch(e) { cart = []; }
+
+function saveCart(){
+  try {localStorage.setItem("palsmart_cart",JSON.stringify(cart));}
+  catch(e){console.warn("Cart storage unavailable");}
+  updateCartCount();
+}
+
+function updateCartCount(){
+  $("cartCount").textContent = cart.reduce((n,p)=>n+p.qty,0);
+}
+
+function showPage(id){
+  const target = $(id);
+  if(!target) return;
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  target.classList.add("active");
+  if(id==="cart") renderCart();
+  if(id==="checkout") renderCheckout();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function makeButton(label,cls,action){
+  const b=document.createElement("button");
+  b.textContent=label;
+  b.className=cls;
+  b.addEventListener("click",action);
+  return b;
+}
+
+function renderProducts(){
+  const list=$("productList");
+  list.replaceChildren();
+  const found=products.filter(p=>
+    (p.name+" "+p.category+" "+p.description).toLowerCase()
+    .includes(searchTerm.toLowerCase()));
+  $("noProducts").hidden=found.length>0;
+  $("productsHeading").textContent=searchTerm?"Search Results":"Popular Products";
+
+  found.forEach(p=>{
+    const card=document.createElement("article");
+    card.className="card";
+    const img=document.createElement("img");
+    img.src=p.images[0];img.alt=p.name;img.loading="lazy";
+    img.addEventListener("click",()=>viewDetails(p.id));
+    const name=document.createElement("h3");
+    name.textContent=p.name;
+    name.addEventListener("click",()=>viewDetails(p.id));
+    const rating=document.createElement("p");
+    rating.className="rating";rating.textContent="★★★★★ Popular product";
+    const price=document.createElement("p");
+    price.className="price";price.textContent="₹"+p.price.toLocaleString("en-IN");
+    const cat=document.createElement("p");cat.textContent=p.category;
+    card.append(img,name,rating,price,cat,
+      makeButton("View Details","secondary",()=>viewDetails(p.id)),
+      makeButton("Add to Cart","primary",()=>addToCart(p.id)));
+    list.appendChild(card);
+  });
+}
+
+function viewDetails(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  currentProductId=id;
+  $("detailName").textContent=p.name;
+  $("detailPrice").textContent="₹"+p.price.toLocaleString("en-IN");
+  $("detailCategory").textContent="Category: "+p.category;
+  $("detailDescription").textContent=p.description;
+  $("detailImage").src=p.images[0];
+  $("thumbnails").replaceChildren();
+  p.images.slice(0,5).forEach((src,i)=>{
+    const img=document.createElement("img");
+    img.src=src;img.alt=p.name+" image "+(i+1);img.loading="lazy";
+    img.addEventListener("click",()=>$("detailImage").src=src);
+    $("thumbnails").appendChild(img);
+  });
+  showPage("details");
+}
+
+function addToCart(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+  const existing=cart.find(x=>x.id===id);
+  if(existing)existing.qty++;
+  else cart.push({id:p.id,name:p.name,price:p.price,image:p.images[0],qty:1});
+  saveCart();
+  alert(p.name+" cart में add हो गया!");
+}
+
+function renderCart(){
+  const container=$("cartItems");
+  container.replaceChildren();
+  if(cart.length===0){
+    const msg=document.createElement("p");
+    msg.className="summary";msg.textContent="आपका cart खाली है। Home से product add करें।";
+    container.appendChild(msg);
+    $("cartSummary").textContent="Total: ₹0";
+    $("checkoutBtn").disabled=true;
+    return;
+  }
+  $("checkoutBtn").disabled=false;
+  cart.forEach(item=>{
+    const row=document.createElement("div");row.className="cart-row";
+    const img=document.createElement("img");img.src=item.image;img.alt=item.name;
+    const info=document.createElement("div");info.className="info";
+    const name=document.createElement("strong");name.textContent=item.name;
+    const price=document.createElement("p");price.textContent="₹"+item.price+" each";
+    info.append(name,price);
+    const qty=document.createElement("div");qty.className="qty";
+    qty.append(makeButton("−","secondary",()=>changeQty(item.id,-1)));
+    const number=document.createElement("span");number.textContent=item.qty;
+    qty.append(number,makeButton("+","secondary",()=>changeQty(item.id,1)));
+    const subtotal=document.createElement("strong");
+    subtotal.textContent="₹"+(item.price*item.qty).toLocaleString("en-IN");
+    row.append(img,info,qty,subtotal,
+      makeButton("Remove","danger",()=>removeItem(item.id)));
+    container.appendChild(row);
+  });
+  const total=cart.reduce((n,p)=>n+p.price*p.qty,0);
+  $("cartSummary").textContent="Total: ₹"+total.toLocaleString("en-IN");
+}
+
+function changeQty(id,delta){
+  const p=cart.find(x=>x.id===id);
+  if(!p)return;
+  p.qty+=delta;
+  if(p.qty<=0)cart=cart.filter(x=>x.id!==id);
+  saveCart();renderCart();
+}
+
+function removeItem(id){
+  cart=cart.filter(x=>x.id!==id);
+  saveCart();renderCart();
+}
+
+function renderCheckout(){
+  const box=$("checkoutSummary");box.replaceChildren();
+  if(!cart.length){
+    box.textContent="Cart खाली है। पहले product add करें。";
+    $("checkoutForm").hidden=true;return;
+  }
+  $("checkoutForm").hidden=false;
+  cart.forEach(p=>{
+    const line=document.createElement("p");
+    line.textContent=p.name+" × "+p.qty+" — ₹"+(p.price*p.qty).toLocaleString("en-IN");
+    box.appendChild(line);
+  });
+  const total=document.createElement("h3");
+  total.textContent="Total: ₹"+cart.reduce((n,p)=>n+p.price*p.qty,0).toLocaleString("en-IN");
+  box.appendChild(total);
+}
+
+document.querySelectorAll("[data-page]").forEach(b=>
+  b.addEventListener("click",()=>showPage(b.dataset.page)));
+$("logo").addEventListener("click",()=>showPage("home"));
+$("headerCart").addEventListener("click",()=>showPage("cart"));
+$("backHome").addEventListener("click",()=>showPage("home"));
+$("continueShopping").addEventListener("click",()=>showPage("home"));
+$("checkoutBtn").addEventListener("click",()=>{
+  if(cart.length)showPage("checkout");
+});
+$("successHome").addEventListener("click",()=>showPage("home"));
+$("heroShop").addEventListener("click",()=>
+  $("productsHeading").scrollIntoView({behavior:"smooth"}));
+
+function doSearch(){
+  searchTerm=$("searchInput").value.trim();
+  renderProducts();showPage("home");
+}
+$("searchBtn").addEventListener("click",doSearch);
+$("searchInput").addEventListener("keydown",e=>{
+  if(e.key==="Enter")doSearch();
+});
+
+$("detailAdd").addEventListener("click",()=>{
+  if(currentProductId!==null)addToCart(currentProductId);
+});
+$("detailBuy").addEventListener("click",()=>{
+  if(currentProductId!==null){
+    addToCart(currentProductId);showPage("checkout");
+  }
+});
+
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio=>{
+  radio.addEventListener("change",()=>{
+    $("paymentMessage").textContent=radio.value==="cod"
+      ?"Cash on Delivery चुना गया है। सामान मिलने पर भुगतान करें।"
+      :"Demo Online Payment चुना गया है। कोई असली payment नहीं होगी।";
+  });
+});
+
+$("checkoutForm").addEventListener("submit",event=>{
+  event.preventDefault();
+  if(!cart.length){
+    alert("पहले cart में product add करें।");
+    showPage("home");return;
+  }
+  if(!$("checkoutForm").reportValidity())return;
+  const name=$("customerName").value.trim();
+  const selected=document.querySelector('input[name="paymentMethod"]:checked');
+  const method=selected && selected.value==="cod"
+    ?"Cash on Delivery (Demo)"
+    :"Online Payment (Demo Only)";
+  const total=cart.reduce((n,p)=>n+p.price*p.qty,0);
+  $("orderMessage").textContent=
+    "धन्यवाद "+name+"! आपका demo order दर्ज हुआ। कुल रकम ₹"+
+    total.toLocaleString("en-IN")+"। Payment Method: "+method+
+    "। कोई असली payment या seller को order नहीं भेजा गया।";
+  cart=[];saveCart();
+  $("checkoutForm").reset();
+  $("paymentMessage").textContent="आप सामान मिलने पर पैसे देंगे।";
+  showPage("success");
+});
+
+$("loginForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  $("loginMessage").textContent="Demo login form सफलतापूर्वक चला। वास्तविक account verification नहीं है।";
+});
+$("signupForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  $("signupMessage").textContent="Demo signup form सफलतापूर्वक चला। असली account के लिए सुरक्षित backend चाहिए।";
+  $("signupForm").reset();
+});
+
+renderProducts();
+updateCartCount();
+</script>
+</body>
+</html>
